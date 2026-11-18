@@ -20,7 +20,7 @@
         android:theme="@style/Theme.DirtyFrag">
 
         <activity
-            android:name=".MainActivity"
+            android:name="df.root.MainActivity"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -30,7 +30,7 @@
         </activity>
 
         <receiver
-            android:name=".BootReceiver"
+            android:name="df.root.BootReceiver"
             android:directBootAware="true"
             android:enabled="false"
             android:exported="false">

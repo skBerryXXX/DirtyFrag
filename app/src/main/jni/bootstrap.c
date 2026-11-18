@@ -10,10 +10,31 @@
 #include <unistd.h>
 
 #define BLKROSET   0x125d
-#define KSUD_STAGE "/data/user_de/0/df.root/ksud"
 #define KSUD       "/data/adb/ksud"
-#define PREFS_PATH "/data/user_de/0/df.root/shared_prefs/dfroot.xml"
 #define MODULES_DIR "/data/adb/modules"
+#define FALLBACK_DIR "/data/user_de/0/tr.root"
+
+/* bootstrap runs from the app's device-protected files dir, whose name is the
+ * package id. Deriving both paths from /proc/self/exe keeps the native side
+ * working when the application id changes - the prebuilt kernel modules only
+ * carry the directory of the build, and the app stages bootstrap right there. */
+static char gs_ksud_stage[320];
+static char gs_prefs[384];
+
+static void init_paths(void)
+{
+    char exe[256];
+    ssize_t n = readlink("/proc/self/exe", exe, sizeof(exe) - 1);
+    if (n > 0) {
+        exe[n] = '\0';
+        char *slash = strrchr(exe, '/');
+        if (slash) *slash = '\0';
+    } else {
+        snprintf(exe, sizeof(exe), "%s", FALLBACK_DIR);
+    }
+    snprintf(gs_ksud_stage, sizeof(gs_ksud_stage), "%s/ksud", exe);
+    snprintf(gs_prefs, sizeof(gs_prefs), "%s/shared_prefs/dfroot.xml", exe);
+}
 
 static int pref_true(const char *buf, const char *key)
 {
@@ -29,7 +50,7 @@ static int pref_true(const char *buf, const char *key)
 static int read_prefs(char *su_manager, size_t su_manager_size, int *soft_reboot,
                       int *disable_modules)
 {
-    int fd = open(PREFS_PATH, O_RDONLY);
+    int fd = open(gs_prefs, O_RDONLY);
     if (fd < 0) return -1;
 
     char buf[4096];
@@ -207,6 +228,7 @@ static int disable_modules(void)
 
 int main(void)
 {
+    init_paths();
     touch("/dev/dfm1");
     char su_manager[256];
     int soft_reboot, disable_mods;
@@ -232,7 +254,7 @@ int main(void)
     }
 
     touch("/dev/dfm5");    
-    if (run_ctx(NULL, (char *[]){ KSUD_STAGE, "late-load", "--package-name", su_manager, NULL }) == 0) {
+    if (run_ctx(NULL, (char *[]){ gs_ksud_stage, "late-load", "--package-name", su_manager, NULL }) == 0) {
         touch("/dev/dfm6");
         if (soft_reboot) {
             while (late_load_running()) sleep(1);
