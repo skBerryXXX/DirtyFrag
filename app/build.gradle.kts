@@ -7,7 +7,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "df.root"
+        applicationId = "df.root.custom"
         // 31, not upstream's 32. The 32 came from upstream's initial commit and nothing here needs
         // it: nothing in the app calls an API above 31 (IpSecManager/UdpEncapsulationSocket are 28,
         // the device-protected storage context is 24, the two splash-screen theme attributes are 31,

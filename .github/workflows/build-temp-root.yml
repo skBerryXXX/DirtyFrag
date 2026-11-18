@@ -16,12 +16,10 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Generate signing keystore
+      - name: Restore signing keystore
         run: |
-          keytool -genkeypair -v -keystore app/keystore.jks -alias dirtyfrag \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass dirtyfrag -keypass dirtyfrag \
-            -dname "CN=TempRoot, OU=TempRoot, O=TempRoot, L=NA, ST=NA, C=NA" >/dev/null
+          echo "${{ secrets.KEYSTORE }}" | base64 --decode > app/keystore.jks
+          ls -l app/keystore.jks
 
       - name: Build DirtyFrag APK
         run: |
