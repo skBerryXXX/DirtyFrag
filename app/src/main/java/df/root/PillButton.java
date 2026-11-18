@@ -129,10 +129,18 @@ public class PillButton extends TextView {
 
     private void applyTint(ColorStateList tint) {
         if (tint == null || fill == null) return;
-        // The shape is the view's own background, so recolouring it is enough - but ask
-        // the view to redraw rather than trust the drawable's invalidateSelf plumbing.
-        fill.setColor(tint.getColorForState(getDrawableState(), DEFAULT_FILL));
+        int base = tint.getColorForState(getDrawableState(), DEFAULT_FILL);
+        fill.setOrientation(GradientDrawable.Orientation.TL_BR);
+        fill.setColors(new int[]{ mix(base, Color.WHITE, 0.14f), base,
+                mix(base, Color.BLACK, 0.22f) });
         invalidate();
+    }
+
+    private static int mix(int color, int to, float amount) {
+        int r = (int) (Color.red(color) * (1 - amount) + Color.red(to) * amount);
+        int g = (int) (Color.green(color) * (1 - amount) + Color.green(to) * amount);
+        int b = (int) (Color.blue(color) * (1 - amount) + Color.blue(to) * amount);
+        return Color.argb(Color.alpha(color), r, g, b);
     }
 
     /**
