@@ -55,7 +55,7 @@ public class DraggableCardView extends FrameLayout {
     public DraggableCardView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         density = context.getResources().getDisplayMetrics().density;
-        float bg = DEFAULT_FILL;
+        int bg = DEFAULT_FILL;
         radius = REST_RADIUS_DP * density;
         int sw = (int) (STROKE_W_DP * density + 0.5f);
         int sc = 0x552BE8B0;

@@ -31,6 +31,11 @@ final class ActivityMainBinding {
     final ImageButton          btnMenu;
     final PillButton           btnRun;
     final ImageButton          btnShareLog;
+    final LinearLayout         hero;
+    final View                 heroDot;
+    final TextView             heroSub;
+    final TextView             heroTitle;
+    final TextView             heroVersion;
     final DraggableCardView    cardBoot;
     final DraggableCardView    cardLog;
     final DraggableCardView    cardModules;
@@ -71,6 +76,11 @@ final class ActivityMainBinding {
         btnMenu            = inflated.findViewById(R.id.btnMenu);
         btnRun             = inflated.findViewById(R.id.btnRun);
         btnShareLog        = inflated.findViewById(R.id.btnShareLog);
+        hero               = inflated.findViewById(R.id.hero);
+        heroDot            = inflated.findViewById(R.id.heroDot);
+        heroSub            = inflated.findViewById(R.id.heroSub);
+        heroTitle          = inflated.findViewById(R.id.heroTitle);
+        heroVersion        = inflated.findViewById(R.id.heroVersion);
         cardBoot           = inflated.findViewById(R.id.cardBoot);
         cardLog            = inflated.findViewById(R.id.cardLog);
         cardModules        = inflated.findViewById(R.id.cardModules);
