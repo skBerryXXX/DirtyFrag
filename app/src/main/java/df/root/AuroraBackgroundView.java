@@ -2,8 +2,8 @@ package df.root;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
 import android.graphics.RadialGradient;
@@ -26,7 +26,10 @@ public class AuroraBackgroundView extends View {
     private final Paint blobPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint gridPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint vignettePaint = new Paint();
+    private final Paint gridPaintBitmap = new Paint();
     private final float density;
+    private Bitmap gridBitmap;
+    private long lastFrame;
 
     private float w, h;
     private float phase;
@@ -52,6 +55,9 @@ public class AuroraBackgroundView extends View {
             animator.setInterpolator(new LinearInterpolator());
             animator.addUpdateListener(a -> {
                 phase = (float) a.getAnimatedValue();
+                long now = android.os.SystemClock.uptimeMillis();
+                if (now - lastFrame < 32) return;
+                lastFrame = now;
                 invalidate();
             });
             animator.start();
@@ -66,6 +72,23 @@ public class AuroraBackgroundView extends View {
         vignettePaint.setShader(new LinearGradient(0, 0, 0, h,
                 new int[]{0x22000000, 0x00000000, 0x00000000, 0x66000000},
                 new float[]{0f, 0.18f, 0.72f, 1f}, Shader.TileMode.CLAMP));
+        buildGrid(width, height);
+    }
+
+    /** The dot grid never moves, so it is rendered once instead of 60 times a second. */
+    private void buildGrid(int width, int height) {
+        if (width <= 0 || height <= 0) return;
+        if (gridBitmap != null) gridBitmap.recycle();
+        gridBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(gridBitmap);
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+        p.setColor(0x12FFFFFF);
+        float step = 30f * density;
+        for (float x = step * 0.5f; x < width; x += step) {
+            for (float y = step * 0.5f; y < height; y += step) {
+                c.drawCircle(x, y, 0.8f * density, p);
+            }
+        }
     }
 
     private void blob(float cx, float cy, float radius, int inner, int outer) {
@@ -84,12 +107,7 @@ public class AuroraBackgroundView extends View {
         canvas.drawRect(0, 0, w, h, basePaint);
 
         // Faint dot grid: reads as depth without competing with the cards.
-        float step = 30f * density;
-        for (float x = step * 0.5f; x < w; x += step) {
-            for (float y = step * 0.5f; y < h; y += step) {
-                canvas.drawCircle(x, y, 0.8f * density, gridPaint);
-            }
-        }
+        if (gridBitmap != null) canvas.drawBitmap(gridBitmap, 0, 0, gridPaintBitmap);
 
         blob((float) (w * 0.12 + Math.sin(t) * w * 0.10),
                 (float) (h * 0.10 + Math.cos(t * 0.7) * h * 0.06),
@@ -112,6 +130,10 @@ public class AuroraBackgroundView extends View {
             animator.cancel();
             animator = null;
         }
+        if (gridBitmap != null) {
+            gridBitmap.recycle();
+            gridBitmap = null;
+        }
         super.onDetachedFromWindow();
     }
 
@@ -128,6 +150,9 @@ public class AuroraBackgroundView extends View {
                 animator.setInterpolator(new LinearInterpolator());
                 animator.addUpdateListener(a -> {
                     phase = (float) a.getAnimatedValue();
+                    long now = android.os.SystemClock.uptimeMillis();
+                    if (now - lastFrame < 32) return;
+                    lastFrame = now;
                     invalidate();
                 });
                 animator.start();
