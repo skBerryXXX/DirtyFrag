@@ -50,15 +50,11 @@ public class BootReceiver extends BroadcastReceiver implements IReporter {
             Log.i(TAG, "boot: expert mode off - autorun skipped");
             return;
         }
-        boolean autoSoftReboot = deCtx.getSharedPreferences("dfroot", Context.MODE_PRIVATE)
-                .getBoolean("auto_soft_reboot", false);
-        // auto_soft_reboot=true: on success, ksud triggers its OWN soft reboot
-        // after late-load completes - so Zygisk/LSPosed modules (which need a
-        // fresh Zygote with the module loaded) become active in the same power
-        // session. With it off, the exploit still roots the device but nothing
-        // reboots. bootstrap reads this from the pref, not from argv.
+        // TempRoot never soft-reboots the device: the pref is forced off so even a
+        // stale auto_soft_reboot from an older build cannot restart the phone.
         deCtx.getSharedPreferences("dfroot", Context.MODE_PRIVATE)
-                .edit().putBoolean("soft_reboot", autoSoftReboot).apply();
+                .edit().putBoolean("auto_soft_reboot", false)
+                .putBoolean("soft_reboot", false).apply();
 
         PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "dfroot:boot");

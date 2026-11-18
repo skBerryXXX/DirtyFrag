@@ -24,11 +24,11 @@ public class BottomFadeView extends View {
     // which swallowed half the readable log and left the bottom of the box as
     // dead black space.
     private static final int[] COLORS = {
-            0x00000000,
-            0x40000000,
-            0x99000000,
-            0xFF000000,
-            0xFF000000
+            0x0005070B,
+            0x4005070B,
+            0x9905070B,
+            0xF205070B,
+            0xFF05070B
     };
     private static final float[] POSITIONS = {0f, 0.50f, 0.72f, 0.93f, 1f};
 

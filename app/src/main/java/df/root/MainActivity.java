@@ -50,15 +50,15 @@ public class MainActivity extends Activity implements IReporter {
     private String exploitPhase = "";
     private int cleanupSteps;
     private float seg1;
-    private float pillPercent = 0.48f;
+    private float pillPercent = 0.88f;
     /** SU-manager launcher geometry: a 54dp circle with a 12dp gap to the Run
      *  pill while a run is in flight; once root is verified the circle morphs
      *  into a pill as wide as the shrunken Run pill (setCompactButton +
      *  morphKsuToPill). Matches the share circle's 54dp on the left. */
-    private static final float KSU_CIRCLE_DP = 54f;
+    private static final float KSU_CIRCLE_DP = 56f;
     private static final float KSU_GAP_DP = 12f;
     /** The Run pill's left inset: what the 26% vertical guideline used to say. */
-    private static final float PILL_INSET_FRACTION = 0.26f;
+    private static final float PILL_INSET_FRACTION = 0.06f;
     private android.animation.ValueAnimator ksuMorph;
     private android.animation.ValueAnimator updateMorph;
     private TextView titleView;
@@ -86,6 +86,7 @@ public class MainActivity extends Activity implements IReporter {
     /** How often the root watch looks. The look is three file stats, not an su call. */
     private static final long ROOT_WATCH_MS = 2000L;
     private boolean moduleRefresh;
+    private android.animation.ObjectAnimator heroPulse;
 
     /** Device-protected storage context: bootstrap.c reads its prefs from
      *  /data/user_de/0/df.root/, so every pref the exploit depends on must live
@@ -228,28 +229,28 @@ public class MainActivity extends Activity implements IReporter {
         // v4.0 renamed every marker and dropped the "env adopted" / "partitions set
         // ro" confirmations, so these steps are re-keyed to the new table.
         if (t.startsWith("kernel module: launching bootstrap")) {
-            setSeg2(0.14f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.14f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.startsWith("bootstrap: loading app preferences file")) {
-            setSeg2(0.28f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.28f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.startsWith("bootstrap: cloning zygote env")
                 || t.startsWith("bootstrap: WARNING - clone zygote env failed")) {
-            setSeg2(0.42f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.42f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.startsWith("bootstrap: setting partitions ro")
                 || t.startsWith("bootstrap: WARNING - set partitions ro failed")) {
-            setSeg2(0.57f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.57f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.startsWith("bootstrap: disabling ksu modules")) {
-            setSeg2(0.71f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.71f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.startsWith("bootstrap: starting SU daemon")) {
-            setSeg2(0.85f, R.string.progress_verification, 0xFFFFFFFF);
+            setSeg2(0.85f, R.string.progress_verification, 0xFF2BE8B0);
         }
         if (t.equals("ksud start: SUCCESS")) {
             setSeg1(1f);
-            setSeg2(1f, R.string.progress_verified, 0xFFFFFFFF);
+            setSeg2(1f, R.string.progress_verified, 0xFF2BE8B0);
         }
         if (exploitPhase.equals("cleanup") && t.startsWith("restoring")) {
             cleanupSteps++;
@@ -530,6 +531,14 @@ public class MainActivity extends Activity implements IReporter {
         // applyRunPillGeometry), so it has to be put in place before the first
         // measure - otherwise the first frame shows it at wrap_content width.
         applyRunPillGeometry(0f);
+        binding.heroVersion.setText(getString(R.string.hero_version, BuildConfig.VERSION_NAME));
+        float heroDensity = getResources().getDisplayMetrics().density;
+        binding.hero.setAlpha(0f);
+        binding.hero.setTranslationY(14f * heroDensity);
+        binding.hero.animate().alpha(1f).translationY(0f).setStartDelay(40)
+                .setDuration(420)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                .start();
 
         // The header is the app's name and nothing else. The version number that
         // used to ride next to it is still recorded, just not in the one line of
@@ -547,7 +556,7 @@ public class MainActivity extends Activity implements IReporter {
         // releases page. No newer release, no pill - the header stays the plain word.
         binding.updatePill.setOnClickListener(v -> {
             v.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-            openUrl("https://github.com/mitschud/DirtyFrag/releases");
+            openUrl("https://github.com/skBerryXXX/DirtyFrag/releases");
         });
         mExec.execute(this::checkForAppUpdate);
 
@@ -618,6 +627,15 @@ public class MainActivity extends Activity implements IReporter {
                 if (child instanceof TextView) {
                     titleView = (TextView) child;
                     titleView.setTypeface(bold);
+                    // Wordmark: white into mint across the headline.
+                    float tw = Math.max(1f,
+                            titleView.getPaint().measureText(getString(R.string.app_name)));
+                    titleView.getPaint().setShader(new android.graphics.LinearGradient(
+                            0f, 0f, tw, titleView.getTextSize(),
+                            new int[]{0xFFFFFFFF, 0xFFBDFFF0, 0xFF2BE8B0},
+                            new float[]{0f, 0.55f, 1f},
+                            android.graphics.Shader.TileMode.CLAMP));
+                    titleView.invalidate();
                     // Measured with the title's own paint, after its own typeface has
                     // been set, because that is the combination the headline renders
                     // in - and the update pill has to be exactly this wide to cover it.
@@ -694,10 +712,10 @@ public class MainActivity extends Activity implements IReporter {
             // also keeps the bar from contradicting the pill: the setFailedState() branch below
             // relabels the pill "Run exploit", while the boot block above settled it on "Reboot".
             binding.twoStep.setSeg1(1f, getString(R.string.progress_percent, 100));
-            binding.twoStep.setSeg2(1f, R.string.progress_no_su, 0xFFE57373);
+            binding.twoStep.setSeg2(1f, R.string.progress_no_su, 0xFFFF6B7A);
         } else if (rootedNow || lastSuccess) {
             binding.twoStep.setSeg1(1f, getString(R.string.progress_percent, 100));
-            binding.twoStep.setSeg2(1f, R.string.progress_verified, 0xFFFFFFFF);
+            binding.twoStep.setSeg2(1f, R.string.progress_verified, 0xFF2BE8B0);
         } else if (lastFailed) {
             setFailedState();
         }
@@ -716,10 +734,7 @@ public class MainActivity extends Activity implements IReporter {
             running = true;
             binding.btnRun.setEnabled(false);
             binding.btnRun.setText(R.string.running);
-            // Same dark greyed-out styling as the Rooted state.
-            binding.btnRun.setTextColor(0xFF6E6E6E);
-            binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(0xFF1F1F1F));
-            binding.btnRun.setStrokeColor(ColorStateList.valueOf(0xFF1F1F1F));
+            paintRunBusy();
             binding.outputView.setText("");
             logBuffer.setLength(0);
             if (lastLogFile.exists()) lastLogFile.delete();
@@ -775,7 +790,7 @@ public class MainActivity extends Activity implements IReporter {
             ghRow.setText(R.string.open_github);
             ghRow.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
             ghRow.setPadding((int) (20 * md), 0, 0, 0);
-            ghRow.setTextColor(0xFFE8E8E8);
+            ghRow.setTextColor(0xFFEAF0F6);
             ghRow.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
             ghRow.setOnClickListener(v2 -> {
                 v2.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
@@ -798,7 +813,7 @@ public class MainActivity extends Activity implements IReporter {
             rlRow.setText(R.string.reset_ui_layout);
             rlRow.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
             rlRow.setPadding((int) (20 * md), 0, 0, 0);
-            rlRow.setTextColor(0xFFE8E8E8);
+            rlRow.setTextColor(0xFFEAF0F6);
             rlRow.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
             rlRow.setOnClickListener(v2 -> {
                 v2.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
@@ -826,7 +841,7 @@ public class MainActivity extends Activity implements IReporter {
             exRow.setBackgroundResource(R.drawable.menu_row_highlight);
             TextView exText = new TextView(this);
             exText.setText(R.string.expert_mode);
-            exText.setTextColor(0xFFE8E8E8);
+            exText.setTextColor(0xFFEAF0F6);
             exText.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
             exRow.addView(exText, new android.widget.LinearLayout.LayoutParams(
                     0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -855,10 +870,10 @@ public class MainActivity extends Activity implements IReporter {
                             android.view.ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, (int) md));
             sepLp.setMargins((int) (20 * md), 0, (int) (20 * md), 0);
             android.view.View sep1 = new android.view.View(this);
-            sep1.setBackgroundColor(0xFF3F3F3F);
+            sep1.setBackgroundColor(0x1FFFFFFF);
             box.addView(sep1, 1, sepLp);
             android.view.View sep2 = new android.view.View(this);
-            sep2.setBackgroundColor(0xFF3F3F3F);
+            sep2.setBackgroundColor(0x1FFFFFFF);
             android.widget.LinearLayout.LayoutParams sep2Lp =
                     new android.widget.LinearLayout.LayoutParams(
                             android.view.ViewGroup.LayoutParams.MATCH_PARENT, Math.max(1, (int) md));
@@ -916,10 +931,10 @@ public class MainActivity extends Activity implements IReporter {
         boolean ok = expertMode;
         binding.tvAutorunTitle.setText(ok ? R.string.autorun : R.string.autorun_expert);
         binding.tvRebootTitle.setText(ok ? R.string.auto_reboot : R.string.auto_reboot_expert);
-        binding.tvAutorunTitle.setTextColor(ok ? 0xFFFFFFFF : 0xFF6E6E6E);
-        binding.tvAutorunDesc.setTextColor(ok ? 0xFF9E9E9E : 0xFF5A5A5A);
-        binding.tvRebootTitle.setTextColor(ok ? 0xFFFFFFFF : 0xFF6E6E6E);
-        binding.tvRebootDesc.setTextColor(ok ? 0xFF9E9E9E : 0xFF5A5A5A);
+        binding.tvAutorunTitle.setTextColor(ok ? 0xFFFFFFFF : 0xFF5F6C7E);
+        binding.tvAutorunDesc.setTextColor(ok ? 0xFF8A97A8 : 0xFF3F4B5C);
+        binding.tvRebootTitle.setTextColor(ok ? 0xFFFFFFFF : 0xFF5F6C7E);
+        binding.tvRebootDesc.setTextColor(ok ? 0xFF8A97A8 : 0xFF3F4B5C);
         binding.switchBootStart.setEnabled(ok);
         binding.switchAutoSoftReboot.setEnabled(ok
                 && binding.switchBootStart.isChecked());
@@ -1349,7 +1364,7 @@ public class MainActivity extends Activity implements IReporter {
                 ? getString(R.string.su_manager_required)
                 : getString(R.string.su_manager_selected, suManagerLabel, suManagerPkg));
         binding.suManagerSubtitle.setTextColor(suManagerPkg == null
-                ? 0xFFE57373 : 0xFF9E9E9E);
+                ? 0xFFFF6B7A : 0xFF8A97A8);
     }
 
     /** OneUI-style rounded popup list over the dim overlay - same look and feel
@@ -1369,7 +1384,7 @@ public class MainActivity extends Activity implements IReporter {
             none.setText(R.string.su_manager_not_found);
             none.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
             none.setPadding((int) (20 * md), (int) (12 * md), (int) (20 * md), (int) (12 * md));
-            none.setTextColor(0xFF6E6E6E);
+            none.setTextColor(0xFF5F6C7E);
             none.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
             box.addView(none);
         }
@@ -1386,7 +1401,7 @@ public class MainActivity extends Activity implements IReporter {
             line.setGravity(android.view.Gravity.CENTER_VERTICAL | android.view.Gravity.START);
             TextView t = new TextView(this);
             t.setText(e.label);
-            t.setTextColor(0xFFE8E8E8);
+            t.setTextColor(0xFFEAF0F6);
             t.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
             line.addView(t, new android.widget.LinearLayout.LayoutParams(
                     0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -1404,7 +1419,7 @@ public class MainActivity extends Activity implements IReporter {
 
             TextView sub = new TextView(this);
             sub.setText(e.packageName);
-            sub.setTextColor(0xFF8E8E8E);
+            sub.setTextColor(0xFF8A97A8);
             sub.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 11);
             col.addView(sub);
 
@@ -1471,7 +1486,7 @@ public class MainActivity extends Activity implements IReporter {
         suManagerPkg = e.packageName;
         suManagerLabel = e.label;
         binding.suManagerSubtitle.setText(getString(R.string.su_manager_selected, e.label, e.packageName));
-        binding.suManagerSubtitle.setTextColor(0xFF9E9E9E);
+        binding.suManagerSubtitle.setTextColor(0xFF8A97A8);
         updateRunButton();
     }
 
@@ -1509,10 +1524,61 @@ public class MainActivity extends Activity implements IReporter {
         boolean ok = suManagerPkg != null;
         binding.btnRun.setEnabled(ok);
         binding.btnRun.setText(R.string.run_exploit);
-        binding.btnRun.setTextColor(ok ? 0xFFE0E0E0 : 0xFF6E6E6E);
-        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(ok ? 0xFF7A7A7A : 0xFF1F1F1F));
-        binding.btnRun.setStrokeColor(
-                ColorStateList.valueOf(ok ? 0xFFA6A6A6 : 0xFF1F1F1F));
+        if (ok) paintRunIdle(); else paintRunDisabled();
+        setHero(R.string.hero_not_rooted, R.string.hero_idle_sub, 0xFF5F6C7E);
+    }
+
+    // ---- Run pill palette ---------------------------------------------------
+
+    private static final int C_ACCENT = 0xFF2BE8B0;
+    private static final int C_ACCENT_INK = 0xFF04120E;
+    private static final int C_DISABLED_BG = 0xFF141A24;
+    private static final int C_DISABLED_FG = 0xFF5F6C7E;
+
+    /** Idle + runnable: the one bright surface in the app. */
+    private void paintRunIdle() {
+        binding.btnRun.setTextColor(C_ACCENT_INK);
+        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(C_ACCENT));
+        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0x662BE8B0));
+    }
+
+    /** Locked: no manager, failed run, or a spent hook. */
+    private void paintRunDisabled() {
+        binding.btnRun.setTextColor(C_DISABLED_FG);
+        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(C_DISABLED_BG));
+        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0x1FFFFFFF));
+    }
+
+    /** A run in flight: glass with a mint rim. */
+    private void paintRunBusy() {
+        binding.btnRun.setTextColor(0xFF9FB0C3);
+        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(0xFF18202C));
+        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0x552BE8B0));
+    }
+
+    /** Root verified: dark mint glass instead of the loud idle mint. */
+    private void paintRunRooted() {
+        binding.btnRun.setTextColor(0xFF35F0C8);
+        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(0xFF13251F));
+        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0x772BE8B0));
+    }
+
+    /** The status line under the header: word, sentence and the dot colour. */
+    private void setHero(int titleRes, int subRes, int dotColor) {
+        binding.heroTitle.setText(titleRes);
+        binding.heroSub.setText(subRes);
+        binding.heroDot.setBackgroundTintList(ColorStateList.valueOf(dotColor));
+        binding.heroDot.setAlpha(1f);
+        if (heroPulse != null) { heroPulse.cancel(); heroPulse = null; }
+        boolean reduced = android.provider.Settings.Global.getFloat(getContentResolver(),
+                android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f;
+        if (dotColor == C_ACCENT && !reduced) {
+            heroPulse = android.animation.ObjectAnimator.ofFloat(
+                    binding.heroDot, "alpha", 1f, 0.4f, 1f);
+            heroPulse.setDuration(1900);
+            heroPulse.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+            heroPulse.start();
+        }
     }
 
     /**
@@ -1590,12 +1656,12 @@ public class MainActivity extends Activity implements IReporter {
     private void checkForAppUpdate() {
         try {
             java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
-                    new java.net.URL("https://api.github.com/repos/mitschud/DirtyFrag/releases/latest")
+                    new java.net.URL("https://api.github.com/repos/skBerryXXX/DirtyFrag/releases/latest")
                             .openConnection();
             conn.setConnectTimeout(8000);
             conn.setReadTimeout(8000);
             conn.setRequestProperty("Accept", "application/vnd.github+json");
-            conn.setRequestProperty("User-Agent", "DirtyFrag");
+            conn.setRequestProperty("User-Agent", "TempRoot");
             if (conn.getResponseCode() != 200) return;
             java.io.BufferedReader reader = new java.io.BufferedReader(
                     new java.io.InputStreamReader(conn.getInputStream()));
@@ -1729,10 +1795,10 @@ public class MainActivity extends Activity implements IReporter {
      * refreshRecovery so the startup read and a tap paint it exactly the same way.
      */
     private void applyRecoveryDot(D2Status.Result r, D2Writer.Vault v, boolean armed) {
-        final int lime = 0xFFAEEA00;    // lime, the update pill's all-clear
-        final int red = 0xFFE57373;     // the red the failure bar already uses
-        final int grey = 0xFF6E6E6E;    // grey: nothing to indicate here
-        final int amber = 0xFFFFB300;   // asked for, not confirmed
+        final int lime = 0xFF2BE8B0;    // lime, the update pill's all-clear
+        final int red = 0xFFFF6B7A;     // the red the failure bar already uses
+        final int grey = 0xFF5F6C7E;    // grey: nothing to indicate here
+        final int amber = 0xFFFFC24B;   // asked for, not confirmed
 
         int dot;
         if (v != null && v.ok) {
@@ -2168,14 +2234,14 @@ public class MainActivity extends Activity implements IReporter {
 
         TextView name = new TextView(this);
         name.setText(labelRes);
-        name.setTextColor(0xFF9E9E9E);
+        name.setTextColor(0xFF8A97A8);
         name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
         row.addView(name, new android.widget.LinearLayout.LayoutParams(
                 0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
         TextView state = new TextView(this);
         state.setText(value);
-        state.setTextColor(0xFFE8E8E8);
+        state.setTextColor(0xFFEAF0F6);
         state.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
         row.addView(state, new android.widget.LinearLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -2210,7 +2276,7 @@ public class MainActivity extends Activity implements IReporter {
         name.setText(label);
         // The same grey the label half of a value row is drawn in, dimmed further when the
         // switch cannot be moved: the row is still readable, it is just not live.
-        name.setTextColor(enabled ? 0xFF9E9E9E : 0xFF6F6F6F);
+        name.setTextColor(enabled ? 0xFF8A97A8 : 0xFF5F6C7E);
         name.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
         row.addView(name, new android.widget.LinearLayout.LayoutParams(
                 0, android.view.ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
@@ -2238,7 +2304,7 @@ public class MainActivity extends Activity implements IReporter {
     /** The hairline between two rows of the Odin submenu. */
     private android.view.View odinSep(float md) {
         android.view.View sep = new android.view.View(this);
-        sep.setBackgroundColor(0xFF3F3F3F);
+        sep.setBackgroundColor(0x1FFFFFFF);
         return sep;
     }
 
@@ -2295,12 +2361,11 @@ public class MainActivity extends Activity implements IReporter {
         failedRun = true;
         binding.twoStep.setFailed(true);
         binding.twoStep.setSeg1(seg1, getString(R.string.progress_failure));
-        binding.twoStep.setSeg2(1f, R.string.progress_reboot, 0xFFE57373);
+        binding.twoStep.setSeg2(1f, R.string.progress_reboot, 0xFFFF6B7A);
         binding.btnRun.setEnabled(false);
         binding.btnRun.setText(R.string.run_exploit);
-        binding.btnRun.setTextColor(0xFF6E6E6E);
-        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(0xFF1F1F1F));
-        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0xFF1F1F1F));
+        paintRunDisabled();
+        setHero(R.string.hero_failed, R.string.hero_failed_sub, 0xFFFF6B7A);
         setCompactButton(false, false);
     }
 
@@ -2319,12 +2384,11 @@ public class MainActivity extends Activity implements IReporter {
         failedRun = true;
         binding.twoStep.setFailed(false);
         binding.twoStep.setSeg1(1f, getString(R.string.progress_percent, 100));
-        binding.twoStep.setSeg2(1f, R.string.progress_no_su, 0xFFE57373);
+        binding.twoStep.setSeg2(1f, R.string.progress_no_su, 0xFFFF6B7A);
         binding.btnRun.setEnabled(false);
         binding.btnRun.setText(R.string.progress_reboot);
-        binding.btnRun.setTextColor(0xFF6E6E6E);
-        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(0xFF1F1F1F));
-        binding.btnRun.setStrokeColor(ColorStateList.valueOf(0xFF1F1F1F));
+        paintRunDisabled();
+        setHero(R.string.hero_hooked, R.string.hero_hooked_sub, 0xFFFFC24B);
         setCompactButton(false, false);
     }
 
@@ -2333,14 +2397,18 @@ public class MainActivity extends Activity implements IReporter {
         // Not rooted does not mean runnable: the manager still has to be picked
         // and a failed run locks the pill until reboot.
         boolean ok = !rooted && canRun();
-        int fg = (rooted || !ok) ? 0xFF6E6E6E : 0xFFE0E0E0;
-        int bg = (rooted || !ok) ? 0xFF1F1F1F : 0xFF7A7A7A;
-        int stroke = (rooted || !ok) ? 0xFF1F1F1F : 0xFFA6A6A6;
         binding.btnRun.setEnabled(ok);
         binding.btnRun.setText(rooted ? R.string.rooted : R.string.run_exploit);
-        binding.btnRun.setTextColor(fg);
-        binding.btnRun.setBackgroundTintList(ColorStateList.valueOf(bg));
-        binding.btnRun.setStrokeColor(ColorStateList.valueOf(stroke));
+        if (rooted) {
+            paintRunRooted();
+            setHero(R.string.hero_rooted, R.string.hero_rooted_sub, 0xFF2BE8B0);
+        } else if (ok) {
+            paintRunIdle();
+            setHero(R.string.hero_not_rooted, R.string.hero_idle_sub, 0xFF5F6C7E);
+        } else {
+            paintRunDisabled();
+            setHero(R.string.hero_not_rooted, R.string.hero_idle_sub, 0xFF5F6C7E);
+        }
         // Rooted/running: shrink the pill left and pop the KSU circle next to
         // it (lit when rooted); fresh run state: full-width pill, no circle.
         setCompactButton(rooted, rooted);
@@ -2357,10 +2425,10 @@ public class MainActivity extends Activity implements IReporter {
         if (measured <= 0) measured = getResources().getDisplayMetrics().widthPixels;
         final float parentW = measured;
         float density = getResources().getDisplayMetrics().density;
-        float target = 0.48f;
+        float target = 0.88f;
         if (compact) {
             float extrasPx = (KSU_GAP_DP + KSU_CIRCLE_DP) * density;
-            target = Math.max(0.20f, 0.48f - extrasPx / parentW);
+            target = Math.max(0.20f, 0.88f - extrasPx / parentW);
         }
         android.animation.ValueAnimator a =
                 android.animation.ValueAnimator.ofFloat(pillPercent, target);
@@ -2380,11 +2448,11 @@ public class MainActivity extends Activity implements IReporter {
         boolean wasVisible = binding.btnKsu.getVisibility() == View.VISIBLE
                 && binding.btnKsu.getAlpha() > 0.99f;
         binding.btnKsu.setBackgroundTintList(ColorStateList.valueOf(
-                ksuLit ? 0xFFB0B0B0 : 0xFF1F1F1F));
+                ksuLit ? 0xFF2BE8B0 : 0x1AFFFFFF));
         // Dark ink on the lit pill, mid-grey on the unlit one - same grey as
         // the share glyph.
         binding.ksuChevron.setImageTintList(ColorStateList.valueOf(
-                ksuLit ? 0xFF1F1F1F : 0xFF6E6E6E));
+                ksuLit ? 0xFF04120E : 0xFF8A97A8));
         if (compact && !wasVisible) {
             // First appearance: pop in as a circle. The morph is chained to the
             // pop-in's end so the Run pill has already finished shrinking - its
@@ -2427,7 +2495,7 @@ public class MainActivity extends Activity implements IReporter {
         g.setDuration(300);
         g.addUpdateListener(anim -> binding.btnKsu
                 .setBackgroundTintList(ColorStateList.valueOf(
-                        mixColor(0xFFB0B0B0, 0xFF9A9A9E,
+                        mixColor(0xFF2BE8B0, 0xFF7C5CFF,
                                 (float) anim.getAnimatedValue()))));
         g.start();
     }
@@ -2546,7 +2614,7 @@ public class MainActivity extends Activity implements IReporter {
         }
         try {
             ContentValues values = new ContentValues();
-            values.put(MediaStore.Downloads.DISPLAY_NAME, "dirtyfrag_log.txt");
+            values.put(MediaStore.Downloads.DISPLAY_NAME, "temproot_log.txt");
             values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
             Uri uri = getContentResolver().insert(
                     MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
@@ -2569,8 +2637,11 @@ public class MainActivity extends Activity implements IReporter {
         // bootstrap.c reads soft_reboot straight out of the DE prefs, so mirror
         // the Autorun card's choice into the key it reads right before launch.
         SharedPreferences sp = mDeCtx.getSharedPreferences("dfroot", MODE_PRIVATE);
-        boolean autoSoftReboot = sp.getBoolean("auto_soft_reboot", false);
-        sp.edit().putBoolean("soft_reboot", autoSoftReboot).apply();
+        // TempRoot never soft-reboots the phone. The old build let this pref turn a
+        // successful run into a black-screen reboot; both keys are forced off so a
+        // stale value from an older install cannot bring it back.
+        sp.edit().putBoolean("auto_soft_reboot", false)
+                .putBoolean("soft_reboot", false).apply();
         lastFailReason = null;
         // 0 ok, 1 ksud/bootstrap error, 2 poll timeout or bad setup, 3 failed to patch files
         // (see exp.c markers[]). Hoisted out of the try because the pill in the finally block has to
@@ -2600,7 +2671,7 @@ public class MainActivity extends Activity implements IReporter {
                 boolean rooted = runRc == 0 || RootState.state() == RootState.State.ROOTED;
                 if (rooted) {
                     setRootedState(true);
-                    binding.twoStep.setSeg2(1f, R.string.progress_verified, 0xFFFFFFFF);
+                    binding.twoStep.setSeg2(1f, R.string.progress_verified, 0xFF2BE8B0);
                 } else if (RootState.hooked()) {
                     // The hook is in and the payload ran; whatever stopped the chain sits downstream
                     // of the mutex - which is also why the pill asks for a reboot instead of offering

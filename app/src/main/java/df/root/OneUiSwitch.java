@@ -20,9 +20,9 @@ public class OneUiSwitch extends View {
     private static final float TRACK_W = 46f, TRACK_H = 28f;
     private static final float THUMB_D = 21f, MARGIN = 3.5f;
 
-    // Colors (strictly neutral grey - monochrome UI)
-    private static final int ON_TRACK = 0xFFC9C9C9,  ON_THUMB = 0xFF141414;
-    private static final int OFF_TRACK = 0xFF2E2E2E, OFF_THUMB = 0xFF8E8E8E;
+    // Brand mint when on, glass grey when off.
+    private static final int ON_TRACK = 0xFF2BE8B0,  ON_THUMB = 0xFF04120E;
+    private static final int OFF_TRACK = 0x33FFFFFF, OFF_THUMB = 0xFF8A97A8;
 
     private static final long ANIM_MS = 160;
 

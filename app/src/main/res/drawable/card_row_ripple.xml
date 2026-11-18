@@ -10,7 +10,7 @@
     android:color="#4D6E6E6E">
     <item android:id="@android:id/mask">
         <shape android:shape="rectangle">
-            <corners android:radius="26dp" />
+            <corners android:radius="24dp" />
             <solid android:color="#FFFFFFFF" />
         </shape>
     </item>

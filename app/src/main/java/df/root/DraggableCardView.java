@@ -3,51 +3,43 @@ package df.root;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.RectF;
+import android.graphics.Shader;
 import android.graphics.drawable.GradientDrawable;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
 /**
- * OneUI card that lives inside a CardStackLayout. It owns nothing but looks:
- * the lifted look (shaded white fill, thin white outline, a shadow to sit on),
- * the slight black-out of the cards that are NOT being moved, and the small
- * shrink of the cards that have to give up their slot. There is no handle to
- * grab: hold anywhere on the card and it lifts, the way a home screen icon does.
- *
- * The gesture belongs to CardStackLayout, which is why this class only answers
- * "what should I look like?". The lifted look arrives with the lift and leaves
- * with the selection. It is deliberately not faded in or charged up first: a
- * highlight that starts animating the moment the finger lands looks like a
- * glitch and says nothing about which card is about to move.
- *
- * This used to be a MaterialCardView. The card is three attributes - a fill, a
- * corner radius and a hairline stroke - so it is now a FrameLayout whose
- * background is one GradientDrawable: the same shape gives the fill, the stroke
- * and, through the default background outline provider, the shadow the lifted
- * card casts on translationZ. activity_main.xml keeps saying cardBackgroundColor,
- * cardCornerRadius and strokeWidth; only the implementation moved (attrs.xml).
+ * Glass card: a soft vertical gradient fill, a hairline gradient border and a
+ * travelling light beam (BorderBeamDrawable) on the foreground.
  */
 public class DraggableCardView extends FrameLayout {
 
-    private static final int REST_BG = 0xFF1C1C1C, HELD_BG = 0xFF3A3A3C;
-    private static final int HELD_STROKE = 0xFFFFFFFF;
-    private static final float REST_RADIUS_DP = 26f;
-    private static final float STROKE_W_DP = 1.2f;
-    /** How far the lifted card floats above the stack. */
+    private static final float REST_RADIUS_DP = 24f;
+    private static final float STROKE_W_DP = 1f;
     private static final float LIFT_Z_DP = 18f;
-    /** "Slight black out" of the cards that are not being moved (VIS1.6). */
     private static final float DIM_ALPHA = 0.42f;
-    /** Cards that make room shrink a little in every axis (VIS3.1). */
     private static final float PUSHED_SCALE = 0.94f;
     private static final long VISUAL_MS = 150;
 
+    private static final int DEFAULT_FILL = 0xE6101622;
+
     private final GradientDrawable shape;
+    private final Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint sheenPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final RectF frame = new RectF();
     private final float density;
     private final int maxStroke;
     private final float liftZ;
 
-    private int strokeColor = HELD_STROKE;
+    private int baseColor = DEFAULT_FILL;
+    private int strokeColor = 0x552BE8B0;
     private int strokeWidth;
+    private float radius;
 
     private boolean held, dimmed, pushed;
     private boolean hideable = true;
@@ -63,43 +55,74 @@ public class DraggableCardView extends FrameLayout {
     public DraggableCardView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         density = context.getResources().getDisplayMetrics().density;
-        maxStroke = (int) (STROKE_W_DP * density);
-        liftZ = LIFT_Z_DP * density;
-
-        float radius = REST_RADIUS_DP * density;
-        int    bg   = REST_BG;
-        int    sw   = 0;
-        int    sc   = HELD_STROKE;
+        float bg = DEFAULT_FILL;
+        radius = REST_RADIUS_DP * density;
+        int sw = (int) (STROKE_W_DP * density + 0.5f);
+        int sc = 0x552BE8B0;
         if (attrs != null) {
             TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.DraggableCardView);
-            bg       = a.getColor(R.styleable.DraggableCardView_cardBackgroundColor, bg);
-            radius   = a.getDimension(R.styleable.DraggableCardView_cardCornerRadius, radius);
-            sw       = a.getDimensionPixelSize(R.styleable.DraggableCardView_strokeWidth, sw);
-            sc       = a.getColor(R.styleable.DraggableCardView_strokeColor, sc);
+            bg = a.getColor(R.styleable.DraggableCardView_cardBackgroundColor, bg);
+            radius = a.getDimension(R.styleable.DraggableCardView_cardCornerRadius, radius);
+            sw = a.getDimensionPixelSize(R.styleable.DraggableCardView_strokeWidth, sw);
+            sc = a.getColor(R.styleable.DraggableCardView_strokeColor, sc);
             a.recycle();
         }
+        baseColor = bg;
+        strokeColor = sc;
+        strokeWidth = sw;
+        maxStroke = Math.max(sw, (int) (1.2f * density + 0.5f));
+        liftZ = LIFT_Z_DP * density;
 
         shape = new GradientDrawable();
         shape.setShape(GradientDrawable.RECTANGLE);
         shape.setCornerRadius(radius);
-        shape.setColor(bg);
-        // The outline is always white; the rest state keeps a width of zero, so
-        // the card stays the flat card the app has always had.
-        strokeColor = sc;
-        strokeWidth = sw;
-        shape.setStroke(strokeWidth, strokeColor);
+        shape.setOrientation(GradientDrawable.Orientation.TOP_BOTTOM);
+        shape.setColors(new int[]{mix(bg, Color.WHITE, 0.06f), bg,
+                mix(bg, Color.BLACK, 0.28f)});
         super.setBackground(shape);
+
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(Math.max(1f, 0.9f * density));
+        sheenPaint.setStyle(Paint.Style.STROKE);
+        sheenPaint.setStrokeWidth(Math.max(1f, 0.8f * density));
+
         setForeground(new BorderBeamDrawable(context, radius));
+        setClipToPadding(false);
     }
 
-    /** Held = lifted card: shaded white fill + thin white outline (VIS1.3). */
+    @Override
+    protected void onSizeChanged(int w, int h, int oldW, int oldH) {
+        super.onSizeChanged(w, h, oldW, oldH);
+        frame.set(0.5f, 0.5f, w - 0.5f, h - 0.5f);
+        borderPaint.setShader(new LinearGradient(0, 0, w, h,
+                new int[]{held ? 0xCC2BE8B0 : 0x552BE8B0,
+                        held ? 0x997C5CFF : 0x337C5CFF,
+                        held ? 0x663AA0FF : 0x1A3AA0FF},
+                new float[]{0f, 0.55f, 1f}, Shader.TileMode.CLAMP));
+        sheenPaint.setShader(new LinearGradient(0, 0, w, 0,
+                0x1AFFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP));
+    }
+
+    @Override
+    protected void dispatchDraw(Canvas canvas) {
+        super.dispatchDraw(canvas);
+        canvas.drawRoundRect(frame, radius, radius, borderPaint);
+        // A short top sheen: one hairline that fades out before the right edge.
+        float inset = radius * 0.8f;
+        canvas.drawLine(inset, 1f * density, getWidth() * 0.62f, 1f * density, sheenPaint);
+    }
+
+    /** Held = lifted card: brighter glass and a warm outline. */
     public void setHeld(boolean held) {
         if (this.held == held) return;
         this.held = held;
-        shape.setColor(held ? HELD_BG : REST_BG);
+        shape.setColors(held
+                ? new int[]{0xF2263048, 0xF21A2133, 0xF2121826}
+                : new int[]{mix(baseColor, Color.WHITE, 0.06f), baseColor,
+                        mix(baseColor, Color.BLACK, 0.28f)});
         strokeWidth = held ? maxStroke : 0;
-        shape.setStroke(strokeWidth, strokeColor);
         setTranslationZ(held ? liftZ : 0f);
+        onSizeChanged(getWidth(), getHeight(), getWidth(), getHeight());
         invalidate();
     }
 
@@ -107,7 +130,7 @@ public class DraggableCardView extends FrameLayout {
         return held;
     }
 
-    /** Slight black-out so the lifted card reads as the selection (VIS1.6). */
+    /** Slight black-out so the lifted card reads as the selection. */
     public void setDimmed(boolean dimmed) {
         if (this.dimmed == dimmed) return;
         this.dimmed = dimmed;
@@ -122,7 +145,6 @@ public class DraggableCardView extends FrameLayout {
         animate().scaleX(s).scaleY(s).setDuration(VISUAL_MS).start();
     }
 
-    /** The SU Manager card moves but can never be hidden. */
     public boolean isHideable() {
         return hideable;
     }
@@ -131,22 +153,29 @@ public class DraggableCardView extends FrameLayout {
         this.hideable = hideable;
     }
 
-    /** Kept for parity with MaterialCardView in case a card ever wants its own colour. */
     public void setCardBackgroundColor(int color) {
-        shape.setColor(color);
+        baseColor = color;
+        shape.setColors(new int[]{mix(color, Color.WHITE, 0.06f), color,
+                mix(color, Color.BLACK, 0.28f)});
         invalidate();
     }
 
     public void setStrokeColor(ColorStateList colors) {
         if (colors == null) return;
         strokeColor = colors.getColorForState(getDrawableState(), strokeColor);
-        shape.setStroke(strokeWidth, strokeColor);
+        onSizeChanged(getWidth(), getHeight(), getWidth(), getHeight());
         invalidate();
     }
 
     public void setStrokeWidth(int px) {
         strokeWidth = px;
-        shape.setStroke(strokeWidth, strokeColor);
         invalidate();
+    }
+
+    private static int mix(int color, int to, float amount) {
+        int r = (int) (Color.red(color) * (1 - amount) + Color.red(to) * amount);
+        int g = (int) (Color.green(color) * (1 - amount) + Color.green(to) * amount);
+        int b = (int) (Color.blue(color) * (1 - amount) + Color.blue(to) * amount);
+        return Color.argb(Color.alpha(color), r, g, b);
     }
 }

@@ -8,7 +8,7 @@
          the dark ramp anyway, so the DayNight parent only ever risked a light frame. -->
     <style name="Theme.DirtyFrag" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">@font/inter</item>
-        <item name="android:windowBackground">@drawable/bg_app_gradient</item>
+        <item name="android:windowBackground">@color/bg_base</item>
         <item name="android:windowAnimationStyle">@style/DF_WindowAnim</item>
         <item name="android:statusBarColor">@color/bg_base</item>
         <item name="android:navigationBarColor">@color/bg_base</item>
@@ -17,7 +17,7 @@
         <item name="android:colorBackground">@color/bg_base</item>
         <!-- Every press highlight in the app: 30% mid-grey, never white. PillButton draws
              its own ripple in the same #4D6E6E6E, as do the explicit ripple drawables. -->
-        <item name="android:colorControlHighlight">#4D6E6E6E</item>
+        <item name="android:colorControlHighlight">#332BE8B0</item>
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:colorControlActivated">@color/accent</item>
         <item name="android:colorPrimary">@color/accent</item>
@@ -74,8 +74,9 @@
     <style name="ToolbarTitle" parent="@android:style/TextAppearance.Material.Title">
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:textFontWeight">700</item>
-        <item name="android:textSize">24sp</item>
+        <item name="android:textSize">28sp</item>
+        <item name="android:letterSpacing">-0.02</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textColor">@color/white</item>
+        <item name="android:textColor">@color/text_primary</item>
     </style>
 </resources>

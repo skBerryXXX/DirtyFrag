@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">DirtyFrag</string>
+    <string name="app_name" translatable="false">TempRoot</string>
+
+    <!-- Hero status -->
+    <string name="hero_not_rooted">Not rooted</string>
+    <string name="hero_rooted">Root active</string>
+    <string name="hero_hooked">Hook loaded</string>
+    <string name="hero_failed">Run failed</string>
+    <string name="hero_idle_sub">Ephemeral root · gone after reboot</string>
+    <string name="hero_rooted_sub">SU is live · session only</string>
+    <string name="hero_hooked_sub">No su appeared · reboot to retry</string>
+    <string name="hero_failed_sub">Patch spent this boot · reboot to retry</string>
+    <string name="hero_version">v%1$s</string>
 
     <!-- Toolbar and menu -->
     <string name="menu">Menu</string>

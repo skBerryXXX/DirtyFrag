@@ -2,10 +2,25 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="bg_base">#FF0A0E17</color>
-    <color name="bg_surface">#CC151A24</color>
-    <color name="text_primary">#FFF2F5F8</color>
-    <color name="text_secondary">#FFA7B4C4</color>
-    <color name="accent">#FF64D8CB</color>
+
+    <color name="bg_base">#FF05070B</color>
+    <color name="bg_deep">#FF03050A</color>
+    <color name="bg_surface">#E6101622</color>
+    <color name="bg_surface_soft">#B30C111B</color>
+
+    <color name="text_primary">#FFF2F6FA</color>
+    <color name="text_secondary">#FF8A97A8</color>
+    <color name="text_muted">#FF5F6C7E</color>
+
+    <color name="accent">#FF2BE8B0</color>
+    <color name="accent_2">#FF7C5CFF</color>
+    <color name="accent_3">#FF3AA0FF</color>
+    <color name="success">#FF35E58F</color>
+    <color name="warning">#FFFFC24B</color>
+    <color name="danger">#FFFF6B7A</color>
+
+    <color name="stroke_soft">#22FFFFFF</color>
+    <color name="stroke_accent">#552BE8B0</color>
+
     <color name="card_surface">@color/bg_surface</color>
 </resources>
