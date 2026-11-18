@@ -16,8 +16,6 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
-
       - name: Generate signing keystore
         run: |
           keytool -genkeypair -v -keystore app/keystore.jks -alias dirtyfrag \
