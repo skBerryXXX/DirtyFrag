@@ -10,11 +10,11 @@
         <item name="android:fontFamily">@font/inter</item>
         <item name="android:windowBackground">@drawable/bg_app_gradient</item>
         <item name="android:windowAnimationStyle">@style/DF_WindowAnim</item>
-        <item name="android:statusBarColor">#0A0E17</item>
-        <item name="android:navigationBarColor">#0A0E17</item>
+        <item name="android:statusBarColor">@color/bg_base</item>
+        <item name="android:navigationBarColor">@color/bg_base</item>
         <!-- android:colorBackground is what the starting window and the splash fall back
              to, so it is the important line here. -->
-        <item name="android:colorBackground">#0A0E17</item>
+        <item name="android:colorBackground">@color/bg_base</item>
         <!-- Every press highlight in the app: 30% mid-grey, never white. PillButton draws
              its own ripple in the same #4D6E6E6E, as do the explicit ripple drawables. -->
         <item name="android:colorControlHighlight">#4D6E6E6E</item>
@@ -29,7 +29,7 @@
              Background is BLACK, not transparent - a transparent splash lets
              OneUI fall back to its own surface. The animated icon is a transparent
              colour so no icon is shown at all. -->
-        <item name="android:windowSplashScreenBackground">#0A0E17</item>
+        <item name="android:windowSplashScreenBackground">@color/bg_base</item>
         <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
         <!-- Card-styled popup menu (rounded #1C1C1C background). -->
         <item name="android:popupMenuStyle">@style/DF_PopupMenu</item>

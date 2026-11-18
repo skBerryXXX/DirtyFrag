@@ -89,6 +89,7 @@ public class DraggableCardView extends FrameLayout {
         strokeWidth = sw;
         shape.setStroke(strokeWidth, strokeColor);
         super.setBackground(shape);
+        setForeground(new BorderBeamDrawable(context, radius));
     }
 
     /** Held = lifted card: shaded white fill + thin white outline (VIS1.3). */

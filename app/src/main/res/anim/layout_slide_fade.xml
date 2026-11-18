@@ -3,4 +3,4 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:animation="@anim/slide_in_fade"
     android:animationOrder="normal"
-    android:delay="0.08" />
+    android:delay="0.33" />

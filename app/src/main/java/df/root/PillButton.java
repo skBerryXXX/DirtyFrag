@@ -100,6 +100,23 @@ public class PillButton extends TextView {
         // built the shape; pendingTint is what setBackgroundTintList stashed away for it.
         if (pendingTint != null) applyTint(pendingTint);
         setStrokeColor(ColorStateList.valueOf(strokeColor));
+
+        setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case android.view.MotionEvent.ACTION_DOWN:
+                    animate().scaleX(0.96f).scaleY(0.96f).setDuration(150)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                            .start();
+                    break;
+                case android.view.MotionEvent.ACTION_UP:
+                case android.view.MotionEvent.ACTION_CANCEL:
+                    animate().scaleX(1f).scaleY(1f).setDuration(220)
+                            .setInterpolator(new android.view.animation.OvershootInterpolator(1.2f))
+                            .start();
+                    break;
+            }
+            return false;
+        });
     }
 
     /** TalkBack should still hear a button, not a label. */

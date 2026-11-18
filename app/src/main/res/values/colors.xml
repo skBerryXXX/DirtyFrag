@@ -2,6 +2,10 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
-    <color name="card_surface">#CC151A24</color>
+    <color name="bg_base">#FF0A0E17</color>
+    <color name="bg_surface">#CC151A24</color>
+    <color name="text_primary">#FFF2F5F8</color>
+    <color name="text_secondary">#FFA7B4C4</color>
     <color name="accent">#FF64D8CB</color>
+    <color name="card_surface">@color/bg_surface</color>
 </resources>
