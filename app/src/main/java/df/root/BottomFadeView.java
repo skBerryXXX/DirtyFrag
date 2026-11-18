@@ -2,57 +2,63 @@ package df.root;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
 
 /**
- * OneUI-style bottom fade. Draws a LinearGradient with explicit positions
- * so the curve can be aggressive (steep late falloff) while still starting
- * at fully transparent - no visible seam at the top edge.
+ * Bottom fade for the console panel. The gradient ends in the console's own
+ * colour, and the bottom corners are rounded to match its outline, so the fade
+ * never paints over the panel's rounded bottom edge with a square block.
  */
 public class BottomFadeView extends View {
 
     private final Paint paint = new Paint();
+    private final Path clip = new Path();
+    private final float density;
 
-    // Fade curve: nothing at all for the first half, then a long easy slope -
-    // 25% at half way, 60% at three quarters, solid only in the last tenth. The
-    // old curve was already 40% grey at a third of the way down and solid at 82%,
-    // which swallowed half the readable log and left the bottom of the box as
-    // dead black space.
     private static final int[] COLORS = {
-            0x0005070B,
-            0x4005070B,
-            0x9905070B,
-            0xF205070B,
-            0xFF05070B
+            0x000A0F18,
+            0x550A0F18,
+            0xB30A0F18,
+            0xF20A0F18,
+            0xFF0A0F18
     };
-    private static final float[] POSITIONS = {0f, 0.50f, 0.72f, 0.93f, 1f};
+    private static final float[] POSITIONS = {0f, 0.48f, 0.74f, 0.94f, 1f};
 
     public BottomFadeView(Context context) {
-        super(context);
+        this(context, null);
     }
 
     public BottomFadeView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        density = context.getResources().getDisplayMetrics().density;
     }
 
     public BottomFadeView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        density = context.getResources().getDisplayMetrics().density;
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldW, int oldH) {
         super.onSizeChanged(w, h, oldW, oldH);
         paint.setShader(new LinearGradient(0, 0, 0, h, COLORS, POSITIONS, Shader.TileMode.CLAMP));
+        float r = 18f * density;
+        clip.reset();
+        clip.addRoundRect(0, 0, w, h,
+                new float[]{0, 0, 0, 0, r, r, r, r}, Path.Direction.CW);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        int save = canvas.save();
+        canvas.clipPath(clip);
         canvas.drawRect(0, 0, getWidth(), getHeight(), paint);
+        canvas.restoreToCount(save);
     }
 }
